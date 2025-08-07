@@ -235,3 +235,60 @@ body.dark-mode .dark-mode-button .icon-light { display: none; }
 .skeleton-text.subtitle {
     width: 80%;
 }
+/* --- ESTILO DA NOVA HOME PAGE --- */
+#home-page-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    text-align: center;
+    padding: 0 2rem;
+}
+
+.home-icon {
+    width: 80px;
+    height: 80px;
+    background-color: var(--accent-color);
+    color: var(--accent-text-color);
+    border-radius: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 2rem;
+    box-shadow: 0 10px 20px -5px rgba(0, 82, 204, 0.3);
+}
+body.dark-mode .home-icon {
+    box-shadow: 0 10px 20px -5px rgba(56, 139, 253, 0.2);
+}
+
+#home-page-container h1 {
+    font-size: 48px;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1.2;
+    max-width: 600px;
+    margin-bottom: 1rem;
+}
+
+#home-page-container p {
+    font-size: 18px;
+    color: var(--text-secondary);
+    max-width: 550px;
+    line-height: 1.6;
+}
+
+/* Lógica para alternar entre as visualizações (Home vs. Grade) */
+.view-grid #home-page-container {
+    display: none;
+}
+
+.view-home #category-title-container,
+.view-home #card-grid {
+    display: none;
+}
+
+/* Deixa o logo clicável */
+.logo#home-button {
+    cursor: pointer;
+}

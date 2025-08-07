@@ -1,14 +1,15 @@
 document.addEventListener('DOMContentLoaded', () => {
     // --- ELEMENTOS DO DOM (sem alterações) ---
+    const mainContent = document.querySelector('.main-content');
     const cardGrid = document.getElementById('card-grid');
     const categoryList = document.getElementById('category-list');
     const searchInput = document.getElementById('search-input');
     const darkModeToggle = document.getElementById('dark-mode-toggle');
     const body = document.body;
     const categoryTitleContainer = document.getElementById('category-title-container');
+    const homeButton = document.getElementById('home-button');
 
     // --- ESTADO DA APLICAÇÃO ---
-    let currentCategory = 'Todos';
     let imageObserver; 
 
     // --- BANCO DE DADOS DE LINKS (sem alterações) ---
@@ -156,7 +157,24 @@ document.addEventListener('DOMContentLoaded', () => {
         { name: "Score Hub", url: "https://scorehub.site/", category: "Aprendizado (Cursos)" },
     ];
 
-    // --- LÓGICA DE RENDERIZAÇÃO E FILTRO ---
+    // --- LÓGICA DE VISUALIZAÇÃO ---
+    function showHomePage() {
+        mainContent.className = 'main-content view-home';
+        document.querySelectorAll('.category-item.active').forEach(item => item.classList.remove('active'));
+    }
+
+    function showGridView(category) {
+        mainContent.className = 'main-content view-grid';
+        renderCategoryTitle(category);
+        let filteredList = initialLinks.filter(link => link.category === category);
+        const searchTerm = searchInput.value.toLowerCase();
+        if (searchTerm) {
+            filteredList = filteredList.filter(link => link.name.toLowerCase().includes(searchTerm));
+        }
+        renderCards(filteredList);
+    }
+    
+    // --- LÓGICA DE RENDERIZAÇÃO ---
     function renderCategoryTitle(title) {
         categoryTitleContainer.classList.remove('visible');
         setTimeout(() => {
@@ -174,48 +192,40 @@ document.addEventListener('DOMContentLoaded', () => {
         if (imageObserver) imageObserver.disconnect();
         
         linkList.forEach(link => {
-            // Cria o card com a estrutura do "esqueleto"
-            const cardElement = document.createElement('div');
-            cardElement.className = 'card-link'; // Usamos div para não ser clicável enquanto carrega
-            cardElement.dataset.url = link.url;
+            // ================== INÍCIO DA MUDANÇA ==================
+            // Renderiza o card com texto real e a imagem como skeleton
+            const cardElement = document.createElement('a'); // Agora é um link desde o início
+            cardElement.className = 'card-link';
+            cardElement.href = link.url;
+            cardElement.target = '_blank';
+            
             cardElement.innerHTML = `
                 <div class="card">
                     <div class="card-image-container">
-                        <div class="skeleton skeleton-image"></div>
+                        <div class="skeleton skeleton-image" data-url="${link.url}"></div>
                     </div>
                     <div class="card-info">
-                        <div class="skeleton skeleton-text title"></div>
-                        <div class="skeleton skeleton-text subtitle"></div>
+                        <h3>${link.name}</h3>
+                        <p>${link.category}</p>
                     </div>
                 </div>
             `;
             cardGrid.appendChild(cardElement);
+            // =================== FIM DA MUDANÇA ===================
         });
 
         setupImageObserver();
     }
     
-    function filterAndRender() {
-        renderCategoryTitle(currentCategory);
-        let filteredList = initialLinks;
-        if (currentCategory !== 'Todos') filteredList = filteredList.filter(link => link.category === currentCategory);
-        const searchTerm = searchInput.value.toLowerCase();
-        if (searchTerm) filteredList = filteredList.filter(link => link.name.toLowerCase().includes(searchTerm));
-        renderCards(filteredList);
-    }
-
     function renderCategories() {
-        const categories = ['Todos', ...new Set(initialLinks.map(link => link.category))];
+        const categories = [...new Set(initialLinks.map(link => link.category))];
         categoryList.innerHTML = '';
         categories.forEach(category => {
             const li = document.createElement('li');
             li.className = 'category-item';
             li.textContent = category;
-            if (category === 'Todos') li.classList.add('active');
             li.addEventListener('click', () => {
-                currentCategory = category;
-                searchInput.value = '';
-                filterAndRender();
+                showGridView(category);
                 document.querySelectorAll('.category-item').forEach(item => item.classList.remove('active'));
                 li.classList.add('active');
             });
@@ -223,12 +233,21 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    function handleSearch() {
+        const activeCategoryItem = document.querySelector('.category-item.active');
+        if (activeCategoryItem) {
+            const currentCategory = activeCategoryItem.textContent;
+            showGridView(currentCategory);
+        } else {
+            searchInput.value = '';
+            alert('Por favor, selecione uma categoria para buscar.');
+        }
+    }
+
     // --- LÓGICA DE PERFORMANCE: LAZY LOADING + CACHING ---
-    async function loadCardData(cardElement) {
-        const url = cardElement.dataset.url;
-        // Encontra o objeto do link correspondente para obter nome e categoria
-        const linkData = initialLinks.find(link => link.url === url);
-        if (!linkData) return;
+    async function loadImage(skeletonElement) {
+        const url = skeletonElement.dataset.url;
+        if (!url) return;
 
         const cacheKey = `screenshot_${url}`;
         const cachedImage = localStorage.getItem(cacheKey);
@@ -237,6 +256,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (!imageUrl) {
             try {
+                // REMOVEMOS O TIMEOUT, a API terá o tempo que precisar
                 const response = await fetch(`https://api.microlink.io/?url=${url}&screenshot=true&screenshot.type=jpeg&screenshot.quality=75`);
                 if (!response.ok) throw new Error('API response not OK');
                 const data = await response.json();
@@ -248,58 +268,58 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             } catch (error) {
                 console.error(`Falha ao buscar screenshot para ${url}:`, error);
-                // Se a API falhar, não faremos nada, o esqueleto continuará lá.
+                // Em caso de erro, o skeleton permanece, sem o fundo azul
+                return;
             }
         }
         
-        // Substitui o esqueleto pelo conteúdo real
         if (imageUrl) {
-            cardElement.outerHTML = `
-                <a href="${linkData.url}" target="_blank" class="card-link">
-                    <div class="card">
-                        <div class="card-image-container">
-                            <img src="${imageUrl}" alt="Preview do site ${linkData.name}" loading="lazy">
-                        </div>
-                        <div class="card-info">
-                            <h3>${linkData.name}</h3>
-                            <p>${linkData.category}</p>
-                        </div>
-                    </div>
-                </a>
-            `;
+            // ================== INÍCIO DA MUDANÇA ==================
+            // Cria um elemento de imagem real e o substitui pelo skeleton
+            const img = document.createElement('img');
+            img.src = imageUrl;
+            img.alt = `Preview do site ${url}`;
+            img.loading = 'lazy';
+            
+            // Espera a imagem carregar antes de trocá-la para uma transição suave
+            img.onload = () => {
+                if (skeletonElement.parentNode) {
+                    skeletonElement.replaceWith(img);
+                }
+            };
+            // =================== FIM DA MUDANÇA ===================
         }
-        // Se imageUrl for nulo (após uma falha de API), o esqueleto simplesmente permanece,
-        // o que é um comportamento de fallback aceitável.
     }
 
     function setupImageObserver() {
-        const cardsToLoad = document.querySelectorAll('.card-link[data-url]');
+        // Agora o observador procura pelos skeletons
+        const skeletonsToLoad = document.querySelectorAll('.skeleton-image[data-url]');
         imageObserver = new IntersectionObserver((entries, observer) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
-                    loadCardData(entry.target);
+                    loadImage(entry.target);
                     observer.unobserve(entry.target);
                 }
             });
         }, { rootMargin: '0px 0px 200px 0px' });
-        cardsToLoad.forEach(card => imageObserver.observe(card));
+        skeletonsToLoad.forEach(skeleton => imageObserver.observe(skeleton));
     }
 
     // --- INICIALIZAÇÃO ---
     function initialize() {
-        enableDarkMode(); // Deixei habilitado por padrão como você pediu antes. Remova se não quiser.
         renderCategories();
-        filterAndRender();
+        showHomePage();
     }
 
     // --- MODO ESCURO ---
     function enableDarkMode() { body.classList.add('dark-mode'); localStorage.setItem('darkMode', 'enabled'); }
     function disableDarkMode() { body.classList.remove('dark-mode'); localStorage.setItem('darkMode', 'disabled'); }
     if (localStorage.getItem('darkMode') === 'enabled') { enableDarkMode(); }
-    darkModeToggle.addEventListener('click', () => {
-        body.classList.contains('dark-mode') ? disableDarkMode() : enableDarkMode();
-    });
+    darkModeToggle.addEventListener('click', () => { body.classList.contains('dark-mode') ? disableDarkMode() : enableDarkMode(); });
 
-    searchInput.addEventListener('input', filterAndRender);
+    // --- EVENT LISTENERS ---
+    homeButton.addEventListener('click', showHomePage);
+    searchInput.addEventListener('input', handleSearch);
+    
     initialize();
 });
