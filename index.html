@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Prateleira de UX/UI do Gui</title>
+    <title>Prateleira de UX/UI</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -28,19 +28,26 @@
                 <input type="search" id="search-input" placeholder="Buscar por nome...">
             </div>
 
-            <nav class="categories-nav" id="category-list">
-                </nav>
+            <nav class="categories-nav" id="category-list"></nav>
 
             <div class="sidebar-footer">
                 <button id="dark-mode-toggle" class="dark-mode-button">
                     <span class="icon-light">☀️</span>
                     <span class="icon-dark">🌙</span>
                 </button>
+                
+                <div class="curator-box">
+                    <p>Conteúdo selecionado por</p>
+                    <strong>Gui Rodrigues</strong>
+                </div>
             </div>
         </aside>
 
-        <main class="main-content" id="card-grid">
-            </main>
+        <main class="main-content">
+            <div id="category-title-container"></div>
+            
+            <div id="card-grid"></div>
+        </main>
     </div>
 
     <script src="js/script.js"></script>
