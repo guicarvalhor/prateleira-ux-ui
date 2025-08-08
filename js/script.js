@@ -9,12 +9,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const categoryTitleContainer = document.getElementById('category-title-container');
     const homeButton = document.getElementById('home-button');
 
-    // --- ESTADO DA APLICAÇÃO ---
-    let imageObserver; 
-
-    // --- BANCO DE DADOS DE LINKS (sem alterações) ---
-    const initialLinks = [
-        // Categoria: Inspiração (UI Geral & Componentes)
+    // --- BANCO DE DADOS DE LINKS ---
+        const initialLinks = [
+    // Categoria: Inspiração (UI Geral & Componentes)
         { name: "Mobbin", url: "https://mobbin.com/", category: "Inspiração (UI Geral & Componentes)" },
         { name: "Lookup", url: "https://lookup.design/", category: "Inspiração (UI Geral & Componentes)" },
         { name: "Interface Index", url: "https://interface-index.com/", category: "Inspiração (UI Geral & Componentes)" },
@@ -155,9 +152,15 @@ document.addEventListener('DOMContentLoaded', () => {
         { name: "Udemy UX Design", url: "https://www.udemy.com/courses/search/?src=ukw&q=ux+design", category: "Aprendizado (Cursos)" },
         { name: "ESPM UX Design", url: "https://uxdi.espm.br/ux-design-b/?gad_source=1#price", category: "Aprendizado (Cursos)" },
         { name: "Score Hub", url: "https://scorehub.site/", category: "Aprendizado (Cursos)" },
-    ];
+];
 
-    // --- LÓGICA DE VISUALIZAÇÃO ---
+    // Função para gerar o caminho local da imagem
+    function getLocalImagePath(url) {
+        const filename = url.replace(/^https?:\/\//, '').replace(/[^a-z0-9]/gi, '_').toLowerCase() + '.jpeg';
+        return `assets/screenshots/${filename}`;
+    }
+
+    // --- LÓGICA DE VISUALIZAÇÃO (sem alterações) ---
     function showHomePage() {
         mainContent.className = 'main-content view-home';
         document.querySelectorAll('.category-item.active').forEach(item => item.classList.remove('active'));
@@ -174,7 +177,7 @@ document.addEventListener('DOMContentLoaded', () => {
         renderCards(filteredList);
     }
     
-    // --- LÓGICA DE RENDERIZAÇÃO ---
+    // --- LÓGICA DE RENDERIZAÇÃO (agora muito mais simples) ---
     function renderCategoryTitle(title) {
         categoryTitleContainer.classList.remove('visible');
         setTimeout(() => {
@@ -189,32 +192,24 @@ document.addEventListener('DOMContentLoaded', () => {
             cardGrid.innerHTML = '<p class="loading-message">Nenhum resultado encontrado.</p>';
             return;
         }
-        if (imageObserver) imageObserver.disconnect();
         
         linkList.forEach(link => {
-            // ================== INÍCIO DA MUDANÇA ==================
-            // Renderiza o card com texto real e a imagem como skeleton
-            const cardElement = document.createElement('a'); // Agora é um link desde o início
-            cardElement.className = 'card-link';
-            cardElement.href = link.url;
-            cardElement.target = '_blank';
-            
-            cardElement.innerHTML = `
-                <div class="card">
-                    <div class="card-image-container">
-                        <div class="skeleton skeleton-image" data-url="${link.url}"></div>
+            const imagePath = getLocalImagePath(link.url);
+            const cardHTML = `
+                <a href="${link.url}" target="_blank" class="card-link">
+                    <div class="card">
+                        <div class="card-image-container">
+                            <img src="${imagePath}" alt="Preview do site ${link.name}" loading="lazy">
+                        </div>
+                        <div class="card-info">
+                            <h3>${link.name}</h3>
+                            <p>${link.category}</p>
+                        </div>
                     </div>
-                    <div class="card-info">
-                        <h3>${link.name}</h3>
-                        <p>${link.category}</p>
-                    </div>
-                </div>
+                </a>
             `;
-            cardGrid.appendChild(cardElement);
-            // =================== FIM DA MUDANÇA ===================
+            cardGrid.innerHTML += cardHTML;
         });
-
-        setupImageObserver();
     }
     
     function renderCategories() {
@@ -244,82 +239,16 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- LÓGICA DE PERFORMANCE: LAZY LOADING + CACHING ---
-    async function loadImage(skeletonElement) {
-        const url = skeletonElement.dataset.url;
-        if (!url) return;
-
-        const cacheKey = `screenshot_${url}`;
-        const cachedImage = localStorage.getItem(cacheKey);
-
-        let imageUrl = cachedImage;
-
-        if (!imageUrl) {
-            try {
-                // REMOVEMOS O TIMEOUT, a API terá o tempo que precisar
-                const response = await fetch(`https://api.microlink.io/?url=${url}&screenshot=true&screenshot.type=jpeg&screenshot.quality=75`);
-                if (!response.ok) throw new Error('API response not OK');
-                const data = await response.json();
-                if (data.status !== 'success') throw new Error('API status not success');
-                
-                imageUrl = data.data.screenshot?.url;
-                if (imageUrl) {
-                    localStorage.setItem(cacheKey, imageUrl);
-                }
-            } catch (error) {
-                console.error(`Falha ao buscar screenshot para ${url}:`, error);
-                // Em caso de erro, o skeleton permanece, sem o fundo azul
-                return;
-            }
-        }
-        
-        if (imageUrl) {
-            // ================== INÍCIO DA MUDANÇA ==================
-            // Cria um elemento de imagem real e o substitui pelo skeleton
-            const img = document.createElement('img');
-            img.src = imageUrl;
-            img.alt = `Preview do site ${url}`;
-            img.loading = 'lazy';
-            
-            // Espera a imagem carregar antes de trocá-la para uma transição suave
-            img.onload = () => {
-                if (skeletonElement.parentNode) {
-                    skeletonElement.replaceWith(img);
-                }
-            };
-            // =================== FIM DA MUDANÇA ===================
-        }
-    }
-
-    function setupImageObserver() {
-        // Agora o observador procura pelos skeletons
-        const skeletonsToLoad = document.querySelectorAll('.skeleton-image[data-url]');
-        imageObserver = new IntersectionObserver((entries, observer) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    loadImage(entry.target);
-                    observer.unobserve(entry.target);
-                }
-            });
-        }, { rootMargin: '0px 0px 200px 0px' });
-        skeletonsToLoad.forEach(skeleton => imageObserver.observe(skeleton));
-    }
-
-    // --- INICIALIZAÇÃO ---
+    // --- INICIALIZAÇÃO E MODO ESCURO (sem alterações na lógica) ---
     function initialize() {
         renderCategories();
         showHomePage();
     }
-
-    // --- MODO ESCURO ---
     function enableDarkMode() { body.classList.add('dark-mode'); localStorage.setItem('darkMode', 'enabled'); }
     function disableDarkMode() { body.classList.remove('dark-mode'); localStorage.setItem('darkMode', 'disabled'); }
     if (localStorage.getItem('darkMode') === 'enabled') { enableDarkMode(); }
     darkModeToggle.addEventListener('click', () => { body.classList.contains('dark-mode') ? disableDarkMode() : enableDarkMode(); });
-
-    // --- EVENT LISTENERS ---
     homeButton.addEventListener('click', showHomePage);
     searchInput.addEventListener('input', handleSearch);
-    
     initialize();
 });
