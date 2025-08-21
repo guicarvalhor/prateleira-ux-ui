@@ -140,24 +140,6 @@ body.dark-mode .dark-mode-button .icon-light { display: none; }
     overflow: hidden;
     transition: background-color 0.3s ease;
 }
-.curator-box p, .curator-box strong { position: relative; z-index: 1; }
-.curator-box p { font-size: 12px; color: var(--text-secondary); margin: 0; }
-.curator-box strong { font-size: 14px; color: var(--text-primary); }
-.curator-box::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 200%;
-    height: 200%;
-    background: conic-gradient(#ff3bff, #ec38ff, #7c38ff, #3877ff, #38ecff, #38ff8d, #ff3bff);
-    transform: translate(-50%, -50%);
-    z-index: 0;
-    animation: spin 5s linear infinite;
-    opacity: 0;
-    transition: opacity 0.4s ease;
-}
-.curator-box:hover::before { opacity: 1; }
 
 /* --- TÍTULO DA CATEGORIA --- */
 #category-title-container {
