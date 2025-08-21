@@ -102,7 +102,6 @@ const initialLinks = [
         { name: "BrandBird", url: "https://www.brandbird.app/", category: "Ferramentas" },
         { name: "Dub.co", url: "https://dub.co/home", category: "Ferramentas" },
         { name: "Tally", url: "https://tally.so/", category: "Ferramentas" },
-        { name: "Stack Radar", url: "https://www.stackradar.co/", category: "Ferramentas" },
         { name: "Product Hunt", url: "https://www.producthunt.com/", category: "Ferramentas" },
         { name: "Buildship", url: "https://buildship.com/", category: "Ferramentas" },
         { name: "Mentimeter", url: "https://www.mentimeter.com/pt-BR", category: "Ferramentas" },
@@ -142,7 +141,7 @@ const initialLinks = [
         { name: "UX Unicórnio", url: "https://uxunicornio.com.br/", category: "Aprendizado (Cursos)" },
         { name: "Udemy UX Design", url: "https://www.udemy.com/courses/search/?src=ukw&q=ux+design", category: "Aprendizado (Cursos)" },
         { name: "ESPM UX Design", url: "https://uxdi.espm.br/ux-design-b/?gad_source=1#price", category: "Aprendizado (Cursos)" },
-        { name: "Score Hub", url: "https://scorehub.site/", category: "Aprendizado (Cursos)" },
+        
 ];
 
 const outputDir = path.join(__dirname, 'assets', 'screenshots');
@@ -156,9 +155,20 @@ function urlToFilename(url) {
 
 async function generateLocalScreenshots() {
     console.log('Iniciando o navegador...');
-    const browser = await puppeteer.launch(); // Lança o navegador
-    const page = await browser.newPage(); // Abre uma nova aba
-    await page.setViewport({ width: 1280, height: 800 }); // Define o tamanho da janela
+    
+    // ================== INÍCIO DA MUDANÇA ==================
+    const browser = await puppeteer.launch({
+        headless: "new", // Usa o novo modo Headless que é mais moderno
+        ignoreHTTPSErrors: true // A MUDANÇA PRINCIPAL: Ignora erros de SSL
+    });
+    // =================== FIM DA MUDANÇA ===================
+    
+    const page = await browser.newPage();
+    
+    // Ajuste adicional: Define um User Agent de um navegador comum
+    await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36');
+
+    await page.setViewport({ width: 1280, height: 800 });
 
     console.log('Iniciando a geração de screenshots...');
     for (const link of initialLinks) {
@@ -172,15 +182,16 @@ async function generateLocalScreenshots() {
 
         console.log(`- [PROCESSANDO] ${link.name}...`);
         try {
-            await page.goto(link.url, { waitUntil: 'networkidle2', timeout: 30000 }); // Navega e espera a página carregar
-            await page.screenshot({ path: outputPath, type: 'jpeg', quality: 80 }); // Tira o screenshot
+            // Aumentamos um pouco o timeout para dar mais chance para sites lentos
+            await page.goto(link.url, { waitUntil: 'networkidle2', timeout: 45000 }); 
+            await page.screenshot({ path: outputPath, type: 'jpeg', quality: 80 });
             console.log(`  - [SALVO] ${filename}`);
         } catch (error) {
             console.error(`  - [ERRO] Falha ao processar ${link.name}: ${error.message}`);
         }
     }
 
-    await browser.close(); // Fecha o navegador
+    await browser.close();
     console.log('\nGeração de screenshots concluída!');
 }
 

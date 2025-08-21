@@ -111,9 +111,6 @@ document.addEventListener('DOMContentLoaded', () => {
         { name: "BrandBird", url: "https://www.brandbird.app/", category: "Ferramentas" },
         { name: "Dub.co", url: "https://dub.co/home", category: "Ferramentas" },
         { name: "Tally", url: "https://tally.so/", category: "Ferramentas" },
-        { name: "Stack Radar", url: "https://www.stackradar.co/", category: "Ferramentas" },
-        { name: "Product Hunt", url: "https://www.producthunt.com/", category: "Ferramentas" },
-        { name: "Buildship", url: "https://buildship.com/", category: "Ferramentas" },
         { name: "Mentimeter", url: "https://www.mentimeter.com/pt-BR", category: "Ferramentas" },
         
         // Categoria: Ferramentas (IA)
